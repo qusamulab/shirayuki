@@ -123,7 +123,7 @@ verification targets still work.
 - Use `__weak`/`__strong` self in escaping blocks
 
 Contributor conventions and the invariants that matter when changing the core are
-in [CLAUDE.md](https://github.com/ykus4/shirayuki/blob/main/CLAUDE.md) and
+in [CLAUDE.md](https://github.com/qusamulab/shirayuki/blob/main/CLAUDE.md) and
 [Architecture](architecture.md#invariants-worth-knowing).
 
 ## Previewing these docs

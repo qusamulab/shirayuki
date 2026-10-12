@@ -8,7 +8,7 @@ freezing, watching and pointer scanning.
 
 ## Install
 
-Download the `.deb` from [Releases](https://github.com/ykus4/shirayuki/releases)
+Download the `.deb` from [Releases](https://github.com/qusamulab/shirayuki/releases)
 and install with a file manager or `dpkg -i`.
 
 Packages are built **rootless**, which is what every iOS 15+ jailbreak
