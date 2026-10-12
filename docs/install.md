@@ -30,7 +30,7 @@ or paths appear under `/var/jb`, you are rootless.
 ## Installing the release
 
 1. Download the `.deb` from
-   [Releases](https://github.com/ykus4/shirayuki/releases).
+   [Releases](https://github.com/qusamulab/shirayuki/releases).
 2. Install it either way:
 
 === "Package manager (recommended)"
@@ -59,7 +59,7 @@ or paths appear under `/var/jb`, you are rootless.
 export THEOS=~/theos
 export THEOS_DEVICE_IP=192.168.1.42     # your device
 
-git clone https://github.com/ykus4/shirayuki.git
+git clone https://github.com/qusamulab/shirayuki.git
 cd shirayuki
 make package install
 ```

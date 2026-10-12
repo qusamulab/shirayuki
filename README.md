@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/ykus4/shirayuki/actions/workflows/build.yml/badge.svg" alt="Build" />
-  <img src="https://github.com/ykus4/shirayuki/actions/workflows/test.yml/badge.svg" alt="Tests" />
-  <img src="https://github.com/ykus4/shirayuki/actions/workflows/format.yml/badge.svg" alt="Format Check" />
+  <img src="https://github.com/qusamulab/shirayuki/actions/workflows/build.yml/badge.svg" alt="Build" />
+  <img src="https://github.com/qusamulab/shirayuki/actions/workflows/test.yml/badge.svg" alt="Tests" />
+  <img src="https://github.com/qusamulab/shirayuki/actions/workflows/format.yml/badge.svg" alt="Format Check" />
   <img src="https://img.shields.io/badge/platform-iOS%2015%2B-blue?style=flat" />
   <img src="https://img.shields.io/badge/arch-arm64-lightgrey?style=flat" />
   <img src="https://img.shields.io/badge/language-ObjC%2B%2B-orange?style=flat" />
@@ -44,7 +44,7 @@ Tap the snowflake button and start hacking — no respring per session.
 
 ## Install
 
-Grab the `.deb` from [Releases](https://github.com/ykus4/shirayuki/releases) and
+Grab the `.deb` from [Releases](https://github.com/qusamulab/shirayuki/releases) and
 install it with a file manager or `dpkg -i`. Requires a jailbroken **iOS 15.0+
 arm64** device with **ElleKit** (rootless) or **Substrate/Substitute** (rooted).
 
@@ -71,7 +71,7 @@ make check          # fmt-check + test + syntax-check
 
 ## Documentation
 
-📖 **<https://ykus4.github.io/shirayuki>**
+📖 **<https://qusamulab.github.io/shirayuki>**
 
 | | |
 |---|---|

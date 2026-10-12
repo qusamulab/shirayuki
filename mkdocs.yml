@@ -1,8 +1,8 @@
 site_name: Shirayuki
 site_description: In-app memory toolkit overlay for jailbroken iOS
-site_url: https://ykus4.github.io/shirayuki
-repo_url: https://github.com/ykus4/shirayuki
-repo_name: ykus4/shirayuki
+site_url: https://qusamulab.github.io/shirayuki
+repo_url: https://github.com/qusamulab/shirayuki
+repo_name: qusamulab/shirayuki
 edit_uri: edit/main/docs/
 
 theme:
