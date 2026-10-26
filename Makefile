@@ -91,11 +91,13 @@ FMT_FILES = $(shell find ShirayukiMemory GUI Tweak tests \
 	-name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \
 	-o -name '*.m' -o -name '*.h')
 
+CLANG_FORMAT ?= clang-format
+
 fmt:
-	clang-format -i $(FMT_FILES)
+	$(CLANG_FORMAT) -i $(FMT_FILES)
 
 fmt-check:
-	clang-format --dry-run --Werror $(FMT_FILES)
+	$(CLANG_FORMAT) --dry-run --Werror $(FMT_FILES)
 
 # --- Verification without a device -----------------------------------------
 #

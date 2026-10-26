@@ -120,7 +120,9 @@ verification targets still work.
 
 ## Code style
 
-- `clang-format` (`.clang-format`, LLVM-based, 4-space indent, 100 columns)
+- `clang-format` 22 in CI (`.clang-format`, LLVM-based, 4-space indent, 100 columns).
+  If another version is your default, select the matching binary with
+  `make fmt CLANG_FORMAT=/path/to/clang-format-22` (also works for `make check`).
 - C++17 via `-std=gnu++17`; `-fobjc-arc`
 - Use `__weak`/`__strong` self in escaping blocks
 
