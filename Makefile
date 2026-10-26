@@ -38,15 +38,18 @@ Shirayuki_FILES = Tweak/Tweak.xm \
 	ShirayukiMemory/Watchpoint.cpp \
 	ShirayukiMemory/Json.cpp \
 	ShirayukiMemory/Session.cpp \
-	GUI/ShirayukiWindow.m \
-	GUI/ShirayukiViewController.mm \
-	GUI/SYTheme.m \
-	GUI/SYResultCell.m \
-	GUI/SYDragButton.m \
-	GUI/SYToast.m \
-	GUI/SYHotkey.m \
-	GUI/SYInput.m \
-	GUI/Handlers/SYScanHelper.cpp \
+	GUI/Controllers/ShirayukiWindow.m \
+	GUI/Controllers/ShirayukiViewController.mm \
+	GUI/Controllers/ShirayukiViewController+Layout.mm \
+	GUI/Controllers/ShirayukiViewController+Actions.mm \
+	GUI/Support/SYTheme.m \
+	GUI/Components/SYResultCell.m \
+	GUI/Components/SYSearchHistoryView.m \
+	GUI/Components/SYDragButton.m \
+	GUI/Components/SYToast.m \
+	GUI/Support/SYHotkey.m \
+	GUI/Support/SYInput.m \
+	GUI/Support/SYScanHelper.cpp \
 	GUI/Handlers/SYSearchHandler.mm \
 	GUI/Handlers/SYPatchHandler.mm \
 	GUI/Handlers/SYFreezeHandler.mm \
@@ -58,7 +61,9 @@ Shirayuki_FILES = Tweak/Tweak.xm \
 
 Shirayuki_CFLAGS = -fobjc-arc \
 	-I$(THEOS_PROJECT_DIR)/ShirayukiMemory \
-	-I$(THEOS_PROJECT_DIR)/GUI \
+	-I$(THEOS_PROJECT_DIR)/GUI/Controllers \
+	-I$(THEOS_PROJECT_DIR)/GUI/Components \
+	-I$(THEOS_PROJECT_DIR)/GUI/Support \
 	-I$(THEOS_PROJECT_DIR)/GUI/Handlers
 # GNU extensions are required, not optional: plain -std=c++17 removes `typeof`,
 # which ARC's __weak/__strong self idiom depends on in ObjC++.

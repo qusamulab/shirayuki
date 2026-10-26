@@ -1,7 +1,10 @@
 #ifndef SHIRAYUKI_SNAPSHOT_HPP
 #define SHIRAYUKI_SNAPSHOT_HPP
 
-#include "ShirayukiMemory.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace Shirayuki {
 

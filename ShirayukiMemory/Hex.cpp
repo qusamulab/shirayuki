@@ -1,4 +1,6 @@
-#include "ShirayukiMemory.hpp"
+#include "Hex.hpp"
+#include "Memory.hpp"
+#include "ShirayukiConfig.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstring>

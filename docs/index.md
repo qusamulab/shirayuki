@@ -33,7 +33,7 @@ that down.
 
 ## A note on what is verified
 
-The C++ core has a host-native test suite (5 suites, 527 checks) that exercises
+The C++ core has a host-native test suite (6 suites, 592 checks) that exercises
 real Mach VM reads, writes, region walks, scans and session round-trips. CI also
 compiles *and links* every ObjC/ObjC++ source against the real iPhoneOS SDK.
 

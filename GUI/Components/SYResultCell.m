@@ -40,6 +40,10 @@
         _badgeLabel.layer.cornerRadius = 4;
         _badgeLabel.clipsToBounds = YES;
         _badgeLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [_badgeLabel setContentHuggingPriority:UILayoutPriorityRequired
+                                       forAxis:UILayoutConstraintAxisHorizontal];
+        [_badgeLabel setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                                     forAxis:UILayoutConstraintAxisHorizontal];
         [_cardView addSubview:_badgeLabel];
 
         [NSLayoutConstraint activateConstraints:@[
@@ -88,6 +92,9 @@
                    detail:(NSString *)detail
                     badge:(NSString *)badge
                badgeColor:(UIColor *)badgeColor {
+    self.isAccessibilityElement = YES;
+    self.accessibilityLabel =
+        [@[ title ?: @"", detail ?: @"", badge ?: @"" ] componentsJoinedByString:@", "];
     _iconView.image = icon;
     _titleLabel.text = title;
     _detailLabel.text = detail;

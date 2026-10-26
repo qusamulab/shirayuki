@@ -7,7 +7,10 @@
     static ShirayukiWindow *instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        CGRect frame = CGRectMake(20, 80, 340, 500);
+        CGRect screen = [UIScreen mainScreen].bounds;
+        CGFloat width = MIN(360, CGRectGetWidth(screen) - 24);
+        CGFloat height = MIN(540, CGRectGetHeight(screen) - 100);
+        CGRect frame = CGRectMake((CGRectGetWidth(screen) - width) / 2, 60, width, height);
         instance = [[ShirayukiWindow alloc] initWithFrame:frame];
         instance.windowLevel = UIWindowLevelAlert + 100;
         instance.backgroundColor = [UIColor clearColor];

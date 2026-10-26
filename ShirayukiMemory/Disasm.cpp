@@ -1,4 +1,5 @@
-#include "ShirayukiMemory.hpp"
+#include "Disasm.hpp"
+#include "Memory.hpp"
 #include <iomanip>
 #include <sstream>
 #include <string>

@@ -1,7 +1,8 @@
 #ifndef SHIRAYUKI_READ_CACHE_HPP
 #define SHIRAYUKI_READ_CACHE_HPP
 
-#include "ShirayukiMemory.hpp"
+#include "Memory.hpp"
+#include <utility>
 
 namespace Shirayuki {
 

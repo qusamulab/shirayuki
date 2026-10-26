@@ -13,6 +13,9 @@
 - (UITableViewCell *)cellForRow:(NSInteger)row inTableView:(UITableView *)tableView;
 
 @optional
+- (BOOL)isBusy;
+- (NSString *)statusText;
+- (NSString *)emptyStateMessage;
 - (void)didSelectRow:(NSInteger)row;
 - (BOOL)canDeleteRow:(NSInteger)row;
 - (void)deleteRow:(NSInteger)row;

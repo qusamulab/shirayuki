@@ -1,13 +1,15 @@
 #ifndef SHIRAYUKI_FREEZE_HPP
 #define SHIRAYUKI_FREEZE_HPP
 
-#include "ShirayukiMemory.hpp"
+#include "ValueFormat.hpp"
 #include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <type_traits>
+#include <vector>
 
 namespace Shirayuki {
 

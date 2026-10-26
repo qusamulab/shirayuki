@@ -71,7 +71,7 @@ every PR build is installable and distinguishable.
 
 ## Release checklist
 
-- [ ] `make check` passes locally (fmt-check, 527 tests, compile + link)
+- [ ] `make check` passes locally (fmt-check, 592 checks, compile + link)
 - [ ] The PR's `Build` check is green — this is the real Theos verification
 - [ ] Anything not verified is called out in the release notes
 - [ ] `layout/DEBIAN/control` `Version:` matches the tag being cut

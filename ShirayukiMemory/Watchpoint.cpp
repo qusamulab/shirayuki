@@ -1,4 +1,5 @@
 #include "Watchpoint.hpp"
+#include "Memory.hpp"
 #include <cstring>
 
 namespace Shirayuki {

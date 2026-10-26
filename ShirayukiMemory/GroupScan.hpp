@@ -1,7 +1,8 @@
 #ifndef SHIRAYUKI_GROUP_SCAN_HPP
 #define SHIRAYUKI_GROUP_SCAN_HPP
 
-#include "ShirayukiMemory.hpp"
+#include "ValueFormat.hpp"
+#include <vector>
 
 namespace Shirayuki {
 

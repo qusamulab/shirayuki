@@ -9,7 +9,9 @@ Jailbroken iOS memory toolkit implemented as a Theos tweak (`.dylib` injected vi
 ```
 ShirayukiMemory/   — pure C++ library (no ObjC, no UIKit)
 GUI/Handlers/      — ObjC++ tab handlers (mix of ObjC + C++)
-GUI/               — ObjC UI layer (UIKit)
+GUI/Controllers/   — panel lifecycle, routing, layout and action categories
+GUI/Components/    — reusable UIKit views and presenters
+GUI/Support/       — theme, input parsing, dispatch and C++ scan bridge
 Tweak/Tweak.xm     — Logos entry point
 tests/             — host-native C++ test suite (see Verification)
 scripts/           — checks that run without Theos
@@ -25,7 +27,7 @@ Theos is **not** needed for any of this, so it works on any machine with Xcode.
 Run it before committing.
 
 ```bash
-make test           # build + run the C++ core suite natively (5 suites, 527 checks)
+make test           # build + run the C++ core suite natively (6 suites, 592 checks)
 make syntax-check   # compile AND link every ObjC/ObjC++/C++ source against the iPhoneOS SDK
 make check          # fmt-check + test + syntax-check
 ```
@@ -90,7 +92,7 @@ flag above. Do not reintroduce workarounds for either.
 
 | File | Role |
 |---|---|
-| `ShirayukiMemory/ShirayukiMemory.hpp` | Umbrella header. Every core `.cpp` and most GUI files include only this |
+| `ShirayukiMemory/ShirayukiMemory.hpp` | Compatibility umbrella; internal code includes the feature headers it uses |
 | `ShirayukiMemory/ShirayukiConfig.hpp` | All tunables and limits. New magic numbers belong here |
 | `ShirayukiMemory/Memory.cpp` | Mach VM read/write, region enumeration, region filters |
 | `ShirayukiMemory/Scanner.cpp` | Value / pattern / string / regex / fuzzy scans, result narrowing. Reads chunked copies via `Memory::read` — never dereference target memory directly |
@@ -106,12 +108,15 @@ flag above. Do not reintroduce workarounds for either.
 | `ShirayukiMemory/ThreadList.cpp`, `Speedhack.cpp` | Thread enumeration; speedhack (skeleton, needs on-device work) |
 | `ShirayukiMemory/Json.cpp` | Minimal JSON reader/writer, so the core needs no Foundation |
 | `ShirayukiMemory/Session.cpp` | Save/load for bookmarks, patches, freezes, chains. Addresses persist as hex strings and types as tags, so neither exceeding 2^53 nor reordering the enum corrupts a session |
-| `GUI/SYTabHandler.h` | Protocol every tab implements |
-| `GUI/SYInput.h/.m` | `SYFormatAddress` and `SYCommand` — the one address parser. Free functions are `extern "C"` so `.mm` callers link |
-| `GUI/SYValueTypeUtil.h` | ObjC++ adapters over `ValueFormat`. Must not reimplement sizes or tag lookups |
-| `GUI/Handlers/SYScanHelper.cpp` | Scan/narrow entry points for the search tab |
-| `GUI/Handlers/SYDispatchUtil.h` | `SYAsync` — the background → main-queue sandwich |
-| `GUI/ShirayukiViewController.mm` | Main panel: tab routing, input field, long-press menus, session auto-save |
+| `GUI/Handlers/SYTabHandler.h` | Protocol every tab implements |
+| `GUI/Support/SYInput.h/.m` | `SYFormatAddress` and `SYCommand` — the one address parser. Free functions are `extern "C"` so `.mm` callers link |
+| `GUI/Support/SYValueTypeUtil.h` | ObjC++ adapters over `ValueFormat`. Must not reimplement sizes or tag lookups |
+| `GUI/Support/SYScanHelper.cpp` | Scan/narrow entry points for the search tab |
+| `GUI/Support/SYDispatchUtil.h` | `SYAsync` — the background → main-queue sandwich |
+| `GUI/Controllers/ShirayukiViewController.mm` | Panel lifecycle, tab routing, input drafts and session auto-save |
+| `GUI/Controllers/ShirayukiViewController+Layout.mm` | View construction and layout; shared state is in the private header |
+| `GUI/Controllers/ShirayukiViewController+Actions.mm` | Search/patch action sheets and typed memory editing |
+| `GUI/Components/SYSearchHistoryView.m` | History dropdown and its own table data source |
 
 ## Conventions worth keeping
 
@@ -138,7 +143,7 @@ to one app, replace the bundle list:
 ## Adding a new tab
 
 1. Create `GUI/Handlers/SYFooHandler.h` and `.mm` implementing `SYTabHandler`
-2. Add to `Shirayuki_FILES` in `Makefile`
+2. Add to `Shirayuki_FILES` in `Makefile`; shared views belong in `GUI/Components/`, helpers in `GUI/Support/`
 3. Instantiate in `ShirayukiViewController.mm` `setupHandlers` alongside the others
 
 ## Versioning & release

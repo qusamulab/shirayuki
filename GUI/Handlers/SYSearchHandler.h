@@ -10,7 +10,10 @@
 @property (nonatomic, assign) BOOL isNarrowing;
 
 - (NSString *)shortType;
+- (BOOL)isNumericType;
 - (void)cycleType;
+- (NSArray<NSString *> *)availableTypes;
+- (void)selectType:(NSString *)type;
 - (void)narrow:(NSString *)mode; // "changed","unchanged","increased","decreased","exact"
 - (void)narrowExact:(NSString *)input;
 - (void)batchModify:(NSString *)value;

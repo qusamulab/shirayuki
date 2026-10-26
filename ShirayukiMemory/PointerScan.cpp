@@ -1,4 +1,6 @@
 #include "PointerScan.hpp"
+#include "Image.hpp"
+#include "Memory.hpp"
 #include "ShirayukiConfig.hpp"
 #include <algorithm>
 #include <cstring>

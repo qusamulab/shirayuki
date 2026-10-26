@@ -1,23 +1,26 @@
 #import "SYSearchHandler.h"
+#import "Hex.hpp"
+#import "Memory.hpp"
 #import "SYDispatchUtil.h"
 #import "SYResultCell.h"
 #import "SYScanHelper.hpp"
 #import "SYTheme.h"
 #import "SYToast.h"
 #import "SYValueTypeUtil.h"
+#import "Scanner.hpp"
 #import "ShirayukiConfig.hpp"
-#import "ShirayukiMemory.hpp"
 #import "ShirayukiViewController.h"
 
 using namespace Shirayuki;
 
 static NSString *const kCellID = @"SYCell";
 
-@interface SYSearchHandler ()
-@property (nonatomic, strong) NSMutableArray<NSNumber *> *results;
-@property (nonatomic, strong) NSMutableArray<NSMutableDictionary *> *candidates;
+@interface SYSearchHandler () {
+    std::vector<Scanner::Candidate> _candidates;
+}
 @property (nonatomic, strong) NSMutableArray<NSString *> *history;
 @property (nonatomic, assign) BOOL searching;
+@property (nonatomic, assign) BOOL hasSearched;
 @end
 
 @implementation SYSearchHandler
@@ -25,8 +28,6 @@ static NSString *const kCellID = @"SYCell";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _results = [NSMutableArray new];
-        _candidates = [NSMutableArray new];
         _history = [NSMutableArray new];
         _searchType = @"int32";
         _hasResults = NO;
@@ -44,8 +45,15 @@ static NSString *const kCellID = @"SYCell";
     return @"magnifyingglass";
 }
 - (NSString *)placeholder {
-    return _isNarrowing ? @"New value or leave empty for filter..."
-                        : @"Value, pattern, or string...";
+    if (_isNarrowing)
+        return @"New value; empty = Changed";
+    if ([_searchType isEqualToString:@"hex"])
+        return @"FF 00 ?? 01";
+    if ([_searchType isEqualToString:@"string"])
+        return @"Text to find";
+    if ([_searchType isEqualToString:@"regex"])
+        return @"Regular expression";
+    return @"Value or ? for unknown";
 }
 - (NSString *)typeLabel {
     return [self shortType];
@@ -64,14 +72,65 @@ static NSString *const kCellID = @"SYCell";
     return SYValueTypeUtil::shortLabel(SYValueTypeUtil::fromString(_searchType));
 }
 
+- (NSArray<NSString *> *)availableTypes {
+    return
+        [SYValueTypeUtil::allTags() arrayByAddingObjectsFromArray:@[ @"hex", @"string", @"regex" ]];
+}
+
+- (void)selectType:(NSString *)type {
+    if (_searching || [_searchType isEqualToString:type] ||
+        ![[self availableTypes] containsObject:type])
+        return;
+    _searchType = [type copy];
+    [self resetSearch];
+}
+
 - (void)cycleType {
-    NSArray *types =
-        @[ @"int32", @"int16", @"int64", @"float", @"double", @"hex", @"string", @"regex" ];
-    NSUInteger idx = [types indexOfObject:_searchType];
-    _searchType = types[(idx + 1) % types.count];
+    NSArray *types = [self availableTypes];
+    NSUInteger index = [types indexOfObject:_searchType];
+    [self selectType:types[index == NSNotFound ? 0 : (index + 1) % types.count]];
+}
+
+- (BOOL)isBusy {
+    return _searching;
+}
+
+- (NSString *)statusText {
+    if (_searching)
+        return _isNarrowing ? @"Filtering results…" : @"Searching memory…";
+    if (_candidates.size() >= kMaxScanResults)
+        return [NSString
+            stringWithFormat:@"%lu results · limit reached", (unsigned long)_candidates.size()];
+    return [NSString stringWithFormat:@"%lu results%@", (unsigned long)_candidates.size(),
+                                      _isNarrowing ? @" · tap to edit" : @""];
+}
+
+- (NSString *)emptyStateMessage {
+    if (_hasSearched)
+        return @"No matches\nTry another value or search type.";
+    return [self isNumericType] ? @"Find a value in memory\nEnter a value, or ? to start unknown."
+                                : @"Find bytes or text\nEnter a query, then tap Search.";
+}
+
+- (BOOL)beginSearch {
+    if (_searching)
+        return NO;
+    _searching = YES;
+    [self.viewController reloadTable];
+    return YES;
+}
+
+- (void)finishSearch {
+    _searching = NO;
+    _hasSearched = YES;
+    _hasResults = !_candidates.empty();
+    _isNarrowing = _hasResults && [self isNumericType];
+    [self.viewController reloadTable];
 }
 
 - (void)performAction:(NSString *)input {
+    if (_searching)
+        return;
     if (_isNarrowing) {
         if (!input.length) {
             [self narrow:@"changed"];
@@ -83,7 +142,7 @@ static NSString *const kCellID = @"SYCell";
     // "?" or empty input on a numeric type starts an unknown-initial-value scan —
     // it seeds candidates over all readable regions without a comparison target,
     // so the user can subsequently narrow via changed/inc/dec.
-    if ([input isEqualToString:@"?"] || (!input.length && [self isNumericType])) {
+    if ([self isNumericType] && ([input isEqualToString:@"?"] || !input.length)) {
         [self performUnknownScan];
         return;
     }
@@ -96,63 +155,46 @@ static NSString *const kCellID = @"SYCell";
 }
 
 - (void)performUnknownScan {
-    if (_searching)
+    if (![self beginSearch])
         return;
-    _searching = YES;
-    [_results removeAllObjects];
-    [_candidates removeAllObjects];
 
     ValueType vtype = SYValueTypeUtil::fromString(_searchType);
-    __block NSMutableArray *localResults = nil;
-    __block NSMutableArray *localCandidates = nil;
-
+    __block std::vector<Scanner::Candidate> candidates;
     SYAsync(
         ^{
             auto regions = Memory::listRegionsFiltered(RegionFilter::ReadWrite);
-            size_t remaining = kMaxScanResults;
-            localResults = [NSMutableArray new];
-            localCandidates = [NSMutableArray new];
-
-            for (auto &r : regions) {
-                if (!remaining)
+            for (const auto &region : regions) {
+                if (candidates.size() >= kMaxScanResults)
                     break;
-                if (r.size > kMaxRegionSize)
+                if (region.size > kMaxRegionSize)
                     continue;
-                auto seeded = Scanner::seedUnknownCandidates(r.start, r.size, vtype, remaining);
-                for (auto &c : seeded) {
-                    [localResults addObject:@((uint64_t)c.address)];
-                    NSMutableDictionary *d = [NSMutableDictionary new];
-                    d[@"address"] = @((uint64_t)c.address);
-                    d[@"snapshot"] = [NSData dataWithBytes:c.snapshotValue.data()
-                                                    length:c.snapshotValue.size()];
-                    [localCandidates addObject:d];
-                }
-                if (seeded.size() >= remaining) {
-                    remaining = 0;
-                } else {
-                    remaining -= seeded.size();
-                }
+                auto seeded = Scanner::seedUnknownCandidates(region.start, region.size, vtype,
+                                                             kMaxScanResults - candidates.size());
+                for (auto &candidate : seeded)
+                    candidates.push_back(std::move(candidate));
             }
         },
         ^{
-            [self.results setArray:localResults];
-            [self.candidates setArray:localCandidates];
-            self.searching = NO;
-            self.hasResults = (self.results.count > 0);
-            self.isNarrowing = self.hasResults;
-            [SYToast show:[NSString stringWithFormat:@"Unknown seeded: %lu",
-                                                     (unsigned long)self.results.count]
-                     type:SYToastInfo];
-            [self.viewController reloadTable];
+            self->_candidates = std::move(candidates);
+            [self finishSearch];
+            [SYToast show:[self statusText] type:SYToastInfo];
         });
 }
 
 - (void)performSearch:(NSString *)input {
-    if (_searching)
+    if ([self isNumericType]) {
+        uint8_t bytes[kMaxValueSize] = {};
+        if (!ValueFormat::parse([input UTF8String], SYValueTypeUtil::fromString(_searchType),
+                                bytes)) {
+            [SYToast show:@"Invalid value for the selected type" type:SYToastError];
+            return;
+        }
+    } else if (!input.length) {
+        [SYToast show:@"Enter a valid search query" type:SYToastError];
         return;
-    _searching = YES;
-    [_results removeAllObjects];
-    [_candidates removeAllObjects];
+    }
+    if (![self beginSearch])
+        return;
 
     if (input.length && ![_history containsObject:input]) {
         [_history insertObject:input atIndex:0];
@@ -162,43 +204,28 @@ static NSString *const kCellID = @"SYCell";
 
     NSString *searchType = _searchType;
 
-    __block NSMutableArray *localResults = nil;
-    __block NSMutableArray *localCandidates = nil;
-    __block size_t count = 0;
-
+    __block std::vector<Scanner::Candidate> candidates;
     SYAsync(
         ^{
-            // SYScanAll is a plain C function — no C++ syntax in this block
-            size_t valSize = 4;
-            uintptr_t *hits = SYScanAll([searchType UTF8String], [input UTF8String],
-                                        kMaxScanResults, kMaxRegionSize, &count, &valSize);
-
-            localResults = [NSMutableArray arrayWithCapacity:count];
-            localCandidates = [NSMutableArray arrayWithCapacity:count];
-
-            for (size_t k = 0; k < count; k++) {
-                uintptr_t addr = hits[k];
-                [localResults addObject:@(addr)];
-                NSMutableDictionary *c = [NSMutableDictionary new];
-                c[@"address"] = @(addr);
-                if (valSize > 0) {
-                    unsigned char buf[8] = {};
-                    SYMemRead(addr, buf, valSize);
-                    c[@"snapshot"] = [NSData dataWithBytes:buf length:valSize];
+            ScanResults scan;
+            scan.data = SYScanAll([searchType UTF8String], [input UTF8String], kMaxScanResults,
+                                  kMaxRegionSize, &scan.count, &scan.valSize);
+            candidates.reserve(scan.count);
+            for (size_t i = 0; i < scan.count; ++i) {
+                Scanner::Candidate candidate{scan.data[i], {}};
+                if (scan.valSize > 0) {
+                    candidate.snapshotValue.resize(scan.valSize);
+                    if (Memory::read(candidate.address, candidate.snapshotValue.data(),
+                                     scan.valSize) != Status::Success)
+                        continue;
                 }
-                [localCandidates addObject:c];
+                candidates.push_back(std::move(candidate));
             }
-            SYScanFreeResults(hits);
         },
         ^{
-            [self.results setArray:localResults];
-            [self.candidates setArray:localCandidates];
-            self.searching = NO;
-            self.hasResults = (count > 0);
-            self.isNarrowing = self.hasResults;
-            NSString *msg = [NSString stringWithFormat:@"%zu results", count];
-            [SYToast show:msg type:count > 0 ? SYToastSuccess : SYToastWarning];
-            [self.viewController reloadTable];
+            self->_candidates = std::move(candidates);
+            [self finishSearch];
+            [SYToast show:[self statusText] type:self.hasResults ? SYToastSuccess : SYToastWarning];
         });
 }
 
@@ -225,55 +252,35 @@ static NSString *const kCellID = @"SYCell";
 - (void)narrowWithMode:(NSString *)mode
                 target:(NSData *)target
            toastPrefix:(NSString *)toastPrefix {
-    NSArray *snapshot = [_candidates copy];
-    size_t valSize = [self currentValueSize];
-    ValueType vtype = SYValueTypeUtil::fromString(_searchType);
-    __block NSMutableArray *kept = nil;
-
+    CompareMode compareMode;
+    if ([mode isEqualToString:@"exact"])
+        compareMode = CompareMode::Exact;
+    else if ([mode isEqualToString:@"changed"])
+        compareMode = CompareMode::Changed;
+    else if ([mode isEqualToString:@"unchanged"])
+        compareMode = CompareMode::Unchanged;
+    else if ([mode isEqualToString:@"increased"])
+        compareMode = CompareMode::Increased;
+    else if ([mode isEqualToString:@"decreased"])
+        compareMode = CompareMode::Decreased;
+    else
+        return;
+    if (![self isNumericType] || !_isNarrowing || ![self beginSearch])
+        return;
+    auto snapshot = _candidates;
+    ValueType type = SYValueTypeUtil::fromString(_searchType);
+    __block std::vector<Scanner::Candidate> kept;
     SYAsync(
         ^{
-            kept = [NSMutableArray new];
-            const uint8_t *targetBytes = target ? (const uint8_t *)target.bytes : NULL;
-
-            for (NSMutableDictionary *c in snapshot) {
-                uintptr_t addr = [c[@"address"] unsignedLongLongValue];
-                uint8_t current[8] = {};
-                if (Memory::read(addr, current, valSize) != Status::Success)
-                    continue;
-
-                BOOL keep = NO;
-                if (targetBytes) {
-                    keep = (memcmp(current, targetBytes, valSize) == 0);
-                } else {
-                    NSData *prev = c[@"snapshot"];
-                    if (!prev)
-                        continue;
-                    const uint8_t *prevBytes = (const uint8_t *)prev.bytes;
-                    if ([mode isEqualToString:@"changed"])
-                        keep = (memcmp(current, prevBytes, valSize) != 0);
-                    else if ([mode isEqualToString:@"unchanged"])
-                        keep = (memcmp(current, prevBytes, valSize) == 0);
-                    else if ([mode isEqualToString:@"increased"])
-                        keep = (compareTypedBytes(current, prevBytes, vtype) > 0);
-                    else if ([mode isEqualToString:@"decreased"])
-                        keep = (compareTypedBytes(current, prevBytes, vtype) < 0);
-                }
-
-                if (keep) {
-                    c[@"snapshot"] = [NSData dataWithBytes:current length:valSize];
-                    [kept addObject:c];
-                }
-            }
+            kept = Scanner::narrowResults(snapshot, type, compareMode,
+                                          target ? target.bytes : nullptr);
         },
         ^{
-            [self.candidates setArray:kept];
-            [self.results removeAllObjects];
-            for (NSDictionary *c in kept)
-                [self.results addObject:c[@"address"]];
-            [SYToast
-                show:[NSString stringWithFormat:@"%@ %lu", toastPrefix, (unsigned long)kept.count]
-                type:SYToastInfo];
-            [self.viewController reloadTable];
+            self->_candidates = std::move(kept);
+            [self finishSearch];
+            [SYToast show:[NSString stringWithFormat:@"%@ %lu", toastPrefix,
+                                                     (unsigned long)self->_candidates.size()]
+                     type:SYToastInfo];
         });
 }
 
@@ -285,6 +292,8 @@ static NSString *const kCellID = @"SYCell";
 }
 
 - (void)batchModify:(NSString *)value {
+    if (_searching || ![self isNumericType])
+        return;
     uint8_t buf[kMaxValueSize] = {};
     // The discarded parse result meant an unparseable value wrote the zeroed
     // buffer to every address in the result set.
@@ -296,11 +305,11 @@ static NSString *const kCellID = @"SYCell";
     }
 
     size_t count = 0;
-    for (NSNumber *addr in _results) {
-        if (Memory::write([addr unsignedLongLongValue], buf, n) == Status::Success)
+    for (const auto &candidate : _candidates) {
+        if (Memory::write(candidate.address, buf, n) == Status::Success)
             count++;
     }
-    const size_t total = _results.count;
+    const size_t total = _candidates.size();
     if (count == total) {
         [SYToast show:[NSString stringWithFormat:@"Modified %zu addresses", count]
                  type:SYToastSuccess];
@@ -312,8 +321,10 @@ static NSString *const kCellID = @"SYCell";
 }
 
 - (void)resetSearch {
-    [_results removeAllObjects];
-    [_candidates removeAllObjects];
+    if (_searching)
+        return;
+    _hasSearched = NO;
+    _candidates.clear();
     _hasResults = NO;
     _isNarrowing = NO;
     [self.viewController reloadTable];
@@ -324,15 +335,18 @@ static NSString *const kCellID = @"SYCell";
 }
 
 - (NSString *)exportResultsAsJSON {
-    if (!_results.count)
+    if (_candidates.empty())
         return nil;
 
-    NSMutableArray *items = [NSMutableArray arrayWithCapacity:_results.count];
-    for (NSNumber *addrNum in _results) {
-        uintptr_t addr = [addrNum unsignedLongLongValue];
-        uint8_t buf[8] = {};
-        Memory::read(addr, buf, [self currentValueSize]);
-        NSString *val = SYValueTypeUtil::formatValue(buf, _searchType);
+    NSMutableArray *items = [NSMutableArray arrayWithCapacity:_candidates.size()];
+    for (const auto &candidate : _candidates) {
+        uintptr_t addr = candidate.address;
+        uint8_t buf[kMaxValueSize] = {};
+        size_t width = [self isNumericType] ? [self currentValueSize] : sizeof(buf);
+        if (Memory::read(addr, buf, width) != Status::Success)
+            continue;
+        NSString *val = [self isNumericType] ? SYValueTypeUtil::formatValue(buf, _searchType)
+                                             : @(Hex::fromBytes(buf, width).c_str());
         [items addObject:@{
             @"address" : [NSString stringWithFormat:@"0x%lX", addr],
             @"value" : val,
@@ -359,14 +373,13 @@ static NSString *const kCellID = @"SYCell";
     NSTimeInterval ts = [[NSDate date] timeIntervalSince1970];
     NSString *filename = [NSString stringWithFormat:@"results_%lld.json", (long long)ts];
     NSString *path = [dir stringByAppendingPathComponent:filename];
-    [data writeToFile:path atomically:YES];
-    return path;
+    return [data writeToFile:path atomically:YES] ? path : nil;
 }
 
 #pragma mark - Table
 
 - (NSInteger)numberOfRows {
-    return _results.count;
+    return _candidates.size();
 }
 
 - (UITableViewCell *)cellForRow:(NSInteger)row inTableView:(UITableView *)tableView {
@@ -374,14 +387,16 @@ static NSString *const kCellID = @"SYCell";
         [tableView dequeueReusableCellWithIdentifier:kCellID
                                         forIndexPath:[NSIndexPath indexPathForRow:row inSection:0]];
 
-    uintptr_t addr = [_results[row] unsignedLongLongValue];
+    uintptr_t addr = _candidates[row].address;
     uint8_t buf[kMaxValueSize] = {};
     // displayValue, not formatValue: the cell wants the annotated form. Say so
     // plainly when the address can no longer be read, rather than formatting a
     // zeroed buffer as if it were a real value.
     NSString *valueStr = @"<unreadable>";
-    if (Memory::read(addr, buf, [self currentValueSize]) == Status::Success)
-        valueStr = SYValueTypeUtil::displayValue(buf, _searchType);
+    size_t width = [self isNumericType] ? [self currentValueSize] : sizeof(buf);
+    if (Memory::read(addr, buf, width) == Status::Success)
+        valueStr = [self isNumericType] ? SYValueTypeUtil::displayValue(buf, _searchType)
+                                        : @(Hex::fromBytes(buf, width).c_str());
 
     [cell configureWithIcon:[SYTheme icon:@"memorychip" size:14]
                       title:[NSString stringWithFormat:@"0x%lX", addr]
@@ -392,12 +407,16 @@ static NSString *const kCellID = @"SYCell";
 }
 
 - (void)didSelectRow:(NSInteger)row {
-    uintptr_t addr = [_results[row] unsignedLongLongValue];
+    if (![self isNumericType]) {
+        [self didLongPressRow:row];
+        return;
+    }
+    uintptr_t addr = _candidates[row].address;
     [self.viewController showModifyAlertForAddress:addr type:_searchType];
 }
 
 - (void)didLongPressRow:(NSInteger)row {
-    uintptr_t addr = [_results[row] unsignedLongLongValue];
+    uintptr_t addr = _candidates[row].address;
     NSString *addrStr = [NSString stringWithFormat:@"0x%lX", addr];
     [UIPasteboard generalPasteboard].string = addrStr;
     [SYToast show:[NSString stringWithFormat:@"Copied %@", addrStr] type:SYToastInfo];

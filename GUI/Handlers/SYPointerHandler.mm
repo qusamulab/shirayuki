@@ -12,6 +12,7 @@ static NSString *const kCellID = @"SYCell";
 
 @interface SYPointerHandler ()
 @property (nonatomic, strong) NSMutableArray<NSDictionary *> *results;
+@property (nonatomic, assign) BOOL scanning;
 @end
 
 @implementation SYPointerHandler
@@ -40,7 +41,18 @@ static NSString *const kCellID = @"SYCell";
     return @"magnifyingglass.circle.fill";
 }
 
+- (BOOL)isBusy {
+    return _scanning;
+}
+
+- (NSString *)statusText {
+    return _scanning ? @"Scanning pointers…"
+                     : [NSString stringWithFormat:@"%lu chains", (unsigned long)_results.count];
+}
+
 - (void)performAction:(NSString *)input {
+    if (_scanning)
+        return;
     NSArray *parts = [input componentsSeparatedByString:@" "];
     unsigned long long addr = strtoull([parts[0] UTF8String], NULL, 16);
     if (!addr) {
@@ -51,7 +63,9 @@ static NSString *const kCellID = @"SYCell";
     uint32_t depth = parts.count > 1 ? [parts[1] intValue] : 3;
     int64_t maxOff = parts.count > 2 ? strtoull([parts[2] UTF8String], NULL, 16) : 0x1000;
 
+    _scanning = YES;
     [_results removeAllObjects];
+    [self.viewController reloadTable];
     [SYToast show:@"Scanning pointers..." type:SYToastInfo];
 
     __block NSMutableArray *localResults = nil;
@@ -80,6 +94,7 @@ static NSString *const kCellID = @"SYCell";
             chainCount = chains.size();
         },
         ^{
+            self.scanning = NO;
             [self.results setArray:localResults];
             [SYToast show:[NSString stringWithFormat:@"%zu chains", chainCount]
                      type:SYToastSuccess];

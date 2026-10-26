@@ -1,4 +1,5 @@
 #include "GroupScan.hpp"
+#include "Memory.hpp"
 #include "ShirayukiConfig.hpp"
 #include <cstring>
 

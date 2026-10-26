@@ -6,7 +6,7 @@ Theos is only needed to build the tweak. Everything below runs on any machine wi
 Xcode:
 
 ```bash
-make test           # build + run the C++ core suite (5 suites, 527 checks)
+make test           # build + run the C++ core suite (6 suites, 592 checks)
 make syntax-check   # compile AND link every source against the iPhoneOS SDK
 make fmt            # clang-format in place
 make fmt-check      # clang-format, failing on any diff
@@ -23,13 +23,15 @@ and the Mach VM APIs it uses — `vm_read_overwrite`, `vm_write`,
 macOS. The suite therefore performs **real** reads, writes, region walks, patches
 and scans against the test process's own memory. It is not a mock.
 
-`tests/CMakeLists.txt` globs `ShirayukiMemory/*.cpp`, so a new core file is picked
-up automatically.
+`tests/CMakeLists.txt` globs `ShirayukiMemory/*.cpp` with `CONFIGURE_DEPENDS`, so a
+new core file is picked up automatically. The pure C++ scan bridge in
+`GUI/Support/SYScanHelper.cpp` is also built into its own host test.
 
 | Suite | Covers |
 |---|---|
 | `test_valuetype` | sizes, tag vocabulary, parse strictness and range limits, format/parse round trips, `compareTypedBytes` ordering |
 | `test_memory` | read/write, unmapped-address handling, region enumeration and filters, region labels, patch apply/restore, hex conversion and dump bounds, image and symbol lookup |
+| `test_scanhelper` | all numeric scan types, raw-query snapshot widths, wildcard patterns, invalid numeric input, bounded GUI reads |
 | `test_scanner` | value/pattern/string/regex scans, stride and alignment, chunk-boundary matches, scanning an unmapped range, all narrowing modes |
 | `test_workers` | freeze holds a value, pause/resume/remove, conditional threshold ordering, watch change detection, prompt `stop()`, repeated start/stop, interval clamping |
 | `test_session` | JSON scalars, malformed input rejection, escape round trips, unicode, large addresses, full session save/load, corrupt-file handling |

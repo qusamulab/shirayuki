@@ -1,4 +1,6 @@
-#include "ShirayukiMemory.hpp"
+#include "Patch.hpp"
+#include "Hex.hpp"
+#include "Memory.hpp"
 #include <cstring>
 
 namespace Shirayuki {
