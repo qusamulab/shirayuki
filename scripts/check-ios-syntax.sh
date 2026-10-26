@@ -40,7 +40,9 @@ COMMON_FLAGS=(
     -target "arm64-apple-ios${DEPLOY_TARGET}"
     -fobjc-arc
     -IShirayukiMemory
-    -IGUI
+    -IGUI/Controllers
+    -IGUI/Components
+    -IGUI/Support
     -IGUI/Handlers
     -Wall
     -Wextra

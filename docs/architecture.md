@@ -1,12 +1,13 @@
 # Architecture
 
 ```
-Tweak/Tweak.xm          Logos entry point: %ctor, UIWindow hook, floating button
+Tweak/Tweak.xm          Logos entry point and floating button
         │
-GUI/                    UIKit panel, tab routing, alerts
-        │
-GUI/Handlers/           one handler per tab (ObjC++)
-        │
+GUI/Controllers/        panel lifecycle and routing; Layout / Actions categories
+        ├── Components/ reusable UIKit views, cells, toast, search history
+        ├── Support/    theme, input parsing, dispatch, C++ scan bridge
+        └── Handlers/   one ObjC++ handler per tab and SYTabHandler protocol
+                │
 ShirayukiMemory/        pure C++ — Mach VM, scanning, patching, persistence
 ```
 
@@ -24,6 +25,14 @@ The rule has been broken before — session persistence lived in a `Session.mm` 
 used `NSJSONSerialization` to read files whose writer was hand-rolled C++. The two
 halves were not round-trip compatible, and nothing noticed because the read path
 had no caller. It is now `Session.cpp` on a small in-tree `Json` reader/writer.
+
+## Feature headers
+
+Each core API has a matching header: `Memory.hpp`, `Image.hpp`, `Scanner.hpp`,
+`ValueFormat.hpp`, `Patch.hpp`, `Hex.hpp` and `Disasm.hpp`. Implementations include
+only their dependencies. `ShirayukiMemory.hpp` still includes these APIs for
+existing clients, so the public umbrella remains compatible. Additional APIs
+such as `Freeze.hpp` and `Session.hpp` remain explicit includes.
 
 ## The C++/ObjC boundary
 
@@ -44,7 +53,7 @@ templates inside `dispatch_async` blocks.
 
 ### C linkage still matters
 
-`GUI/SYInput.m` is compiled as plain Objective-C, so it exports C symbols. Its
+`GUI/Support/SYInput.m` is compiled as plain Objective-C, so it exports C symbols. Its
 declarations are wrapped in `extern "C"` for C++ callers. Without that, an ObjC++
 caller mangles the call and the link fails — and `-fsyntax-only` cannot see it,
 because both translation units type-check fine in isolation. That is why
@@ -129,18 +138,27 @@ Mach-O `__DATA*` segment bounds.
 
 ## Tabs
 
-Each tab is one class implementing `SYTabHandler` (`GUI/SYTabHandler.h`): title,
+Each tab is one class implementing `SYTabHandler` (`GUI/Handlers/SYTabHandler.h`): title,
 icon, placeholder, type label, action icon, plus `performAction:` and the table
 data methods. Optional hooks cover row selection, deletion, long-press and row
 height.
 
 `ShirayukiViewController` owns the handler array and routes to the selected one.
 
-!!! note "Known rough edge"
-    The view controller still branches on the selected tab index in several places
-    for per-tab menus, and reaches into concrete handler types. A protocol-driven
-    version exists but was deferred, because it also has to absorb the Threads and
-    Modules tabs.
+View construction lives in `ShirayukiViewController+Layout.mm`; action sheets and
+memory editing live in `+Actions.mm`. `+Private.h` shares internal properties
+without expanding the public controller API. Concrete handler references keep
+cross-tab actions independent of tab ordering.
+
+Search results use `Scanner::Candidate` directly, including their byte snapshots.
+The handler delegates narrowing to `Scanner::narrowResults`; the GUI does not
+maintain a second comparison implementation. Numeric scan widths come from
+`ValueFormat`; the bridge sends them directly to `findValueBytes`.
+
+`SYSearchHistoryView` owns a separate table and backdrop. History rows cannot be
+routed to result editing or deletion, and its height is recalculated on each show.
+Handlers can expose `isBusy`, `statusText` and `emptyStateMessage` for panel
+feedback. Busy scans disable submission, type changes and result interaction.
 
 ## Configuration
 

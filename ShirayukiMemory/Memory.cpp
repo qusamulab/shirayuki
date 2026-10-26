@@ -1,7 +1,10 @@
-#include "ShirayukiMemory.hpp"
+#include "Memory.hpp"
+#include "Image.hpp"
 #include <libkern/OSCacheControl.h>
 #include <mach-o/getsect.h>
 #include <mach/vm_map.h>
+
+#include <mach-o/dyld.h>
 
 namespace Shirayuki {
 

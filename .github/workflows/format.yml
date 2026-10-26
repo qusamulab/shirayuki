@@ -8,7 +8,9 @@ on:
 
 jobs:
   clang-format:
-    runs-on: ubuntu-latest
+    # Match the noble LLVM apt repository below; ubuntu-latest may move to a
+    # release with incompatible LLVM runtime dependencies.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 

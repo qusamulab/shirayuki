@@ -25,13 +25,23 @@ Tap the snowflake to open it. Drag the title bar to move it, tap ✕ to close.
 
 Three controls drive everything:
 
-- **Type button** (`i32`) — tap to cycle the value type.
+- **Type button** (`i32`) — tap to choose a numeric type, pattern, string or regex.
+  Changing the type clears previous results and their snapshots.
 - **Input field** — the value, pattern or address. Tap it on the Search tab to see
-  recent entries.
+  recent entries. Each tab keeps its own input when you switch away.
 - **Action button** (▶) — runs the tab's action. **Long-press it** for extra
   actions: export, batch modify, undo/redo, remove all.
 
-Long-pressing a *row* usually copies its address.
+The status line shows the result count, including when the scan limit is reached.
+A spinner marks an active scan; submission, type changes and result interaction
+are disabled until it finishes. Empty results show guidance for the next search.
+The narrowing row collapses when it is not needed and scrolls horizontally when
+its buttons do not fit.
+
+Long-pressing a *row* usually copies its address. Raw pattern, string and regex
+results show a bounded byte preview; tapping them copies the address. Numeric
+results open the value editor. The Search action menu includes **New Search** to
+clear results without changing the type.
 
 ## Finding a value you can see
 
@@ -62,8 +72,8 @@ value.
 three rounds is usually enough.
 
 !!! tip "Wrong type is the most common reason a scan finds nothing"
-    A displayed `100` is very often a `float`. If `i32` finds nothing, cycle to
-    `f32` and try again. Health and currency are frequently floats; counters and
+    A displayed `100` is very often a `float`. If `i32` finds nothing, choose
+    `float` and try again. Health and currency are frequently floats; counters and
     levels are usually integers.
 
 **5. Write to it.** Tap the row. The dialog shows the current value and lets you
@@ -104,7 +114,7 @@ as a candidate, and you then narrow purely by behaviour:
 4. Do something that does *not* change it, tap **Unchanged**.
 5. Alternate until the set is small.
 
-**Inc** and **Dec** are the useful ones for values that drift in one direction —
+**Increased** and **Decreased** are the useful ones for values that drift in one direction —
 a timer counting down, score going up. Comparisons are numeric, so this works
 correctly for negative and floating point values.
 

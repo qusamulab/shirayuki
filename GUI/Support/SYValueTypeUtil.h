@@ -1,12 +1,12 @@
 #pragma once
 
-#import "ShirayukiMemory.hpp"
+#import "ValueFormat.hpp"
 #import <Foundation/Foundation.h>
 
 /// Thin ObjC++ adapters over Shirayuki::ValueFormat.
 ///
 /// All type-dependent behaviour lives in the C++ descriptor table
-/// (ShirayukiMemory/ValueType.cpp). Nothing here may reimplement sizes, tag
+/// (ShirayukiMemory/ValueFormat.cpp). Nothing here may reimplement sizes, tag
 /// lookups or per-type formatting — that duplication is what let the ObjC and
 /// C++ halves of the app disagree about what a type tag means.
 namespace SYValueTypeUtil {

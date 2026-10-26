@@ -1,13 +1,14 @@
 #ifndef SHIRAYUKI_WATCHPOINT_HPP
 #define SHIRAYUKI_WATCHPOINT_HPP
 
-#include "ShirayukiMemory.hpp"
+#include "ValueFormat.hpp"
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace Shirayuki {
 

@@ -1,4 +1,5 @@
 #include "Freeze.hpp"
+#include "Memory.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstring>

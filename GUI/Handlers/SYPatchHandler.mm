@@ -1,8 +1,10 @@
 #import "SYPatchHandler.h"
+#import "Hex.hpp"
+#import "Memory.hpp"
+#import "Patch.hpp"
 #import "SYResultCell.h"
 #import "SYTheme.h"
 #import "SYToast.h"
-#import "ShirayukiMemory.hpp"
 #import "ShirayukiViewController.h"
 
 using namespace Shirayuki;

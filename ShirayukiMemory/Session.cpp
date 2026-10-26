@@ -7,6 +7,7 @@
 // `\r`, `\b`, `\f` and control characters unescaped. Both directions now go
 // through Json.
 #include "Session.hpp"
+#include "Hex.hpp"
 
 #include "Json.hpp"
 

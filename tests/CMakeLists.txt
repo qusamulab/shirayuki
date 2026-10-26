@@ -14,7 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../ShirayukiMemory)
 
-file(GLOB CORE_SOURCES ${CORE_DIR}/*.cpp)
+file(GLOB CORE_SOURCES CONFIGURE_DEPENDS ${CORE_DIR}/*.cpp)
 
 add_library(shirayuki_core STATIC ${CORE_SOURCES})
 target_include_directories(shirayuki_core PUBLIC ${CORE_DIR})
@@ -22,7 +22,7 @@ target_compile_options(shirayuki_core PRIVATE -Wall -Wextra -Wno-unused-paramete
 
 enable_testing()
 
-file(GLOB TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/test_*.cpp)
+file(GLOB TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/test_*.cpp)
 
 foreach(test_src ${TEST_SOURCES})
     get_filename_component(test_name ${test_src} NAME_WE)
@@ -35,3 +35,7 @@ foreach(test_src ${TEST_SOURCES})
     # from wedging CI instead of failing.
     set_tests_properties(${test_name} PROPERTIES TIMEOUT 60)
 endforeach()
+
+# The GUI scan bridge is pure C++; exercise it on the host as well.
+target_sources(test_scanhelper PRIVATE ../GUI/Support/SYScanHelper.cpp)
+target_include_directories(test_scanhelper PRIVATE ../GUI/Support)

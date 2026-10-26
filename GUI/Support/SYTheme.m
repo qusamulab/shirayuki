@@ -46,7 +46,7 @@
     return [UIColor colorWithWhite:0.7 alpha:1.0];
 }
 + (UIColor *)textMuted {
-    return [UIColor colorWithWhite:0.45 alpha:1.0];
+    return [UIColor colorWithWhite:0.6 alpha:1.0];
 }
 
 // --- Fonts ---
@@ -63,7 +63,7 @@
     return [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
 }
 + (UIFont *)captionFont {
-    return [UIFont systemFontOfSize:10 weight:UIFontWeightMedium];
+    return [UIFont systemFontOfSize:11 weight:UIFontWeightMedium];
 }
 
 // --- Radius ---

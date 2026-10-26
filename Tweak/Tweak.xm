@@ -7,12 +7,8 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "ShirayukiMemory.hpp"
-#import "Freeze.hpp"
 #import "ShirayukiWindow.h"
 #import "SYDragButton.h"
-
-using namespace Shirayuki;
 
 static SYDragButton *g_toggleButton = nil;
 

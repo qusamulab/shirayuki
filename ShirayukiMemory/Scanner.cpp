@@ -1,5 +1,6 @@
+#include "Scanner.hpp"
+#include "Memory.hpp"
 #include "ShirayukiConfig.hpp"
-#include "ShirayukiMemory.hpp"
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -396,7 +397,7 @@ Scanner::seedUnknownCandidates(uintptr_t start, size_t len, ValueType type, size
 }
 
 // --- Fuzzy scan: exact-value ± tolerance (float/double) ---
-// Declared in ShirayukiMemory.hpp under Scanner.
+// Declared in Scanner.hpp.
 
 std::vector<uintptr_t> Scanner::findValueFuzzy(uintptr_t start, size_t len, double value,
                                                double tolerance, ValueType type) {

@@ -27,7 +27,7 @@ int SYMemRead(uintptr_t addr, unsigned char *buf, size_t valSize);
 } // extern "C"
 
 // RAII wrapper for scan results — ensures SYScanFreeResults is always called.
-// Usage (outside dispatch_async blocks only):
+// Usage:
 //   ScanResults r;
 //   r.data = SYScanAll(..., &r.count, &r.valSize);
 struct ScanResults {

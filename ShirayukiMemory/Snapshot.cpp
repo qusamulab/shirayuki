@@ -1,4 +1,5 @@
 #include "Snapshot.hpp"
+#include "Memory.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>

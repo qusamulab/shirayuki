@@ -3,7 +3,7 @@
 
 #include "Freeze.hpp"
 #include "PointerScan.hpp"
-#include "ShirayukiMemory.hpp"
+#include "ValueFormat.hpp"
 #include <string>
 
 namespace Shirayuki {

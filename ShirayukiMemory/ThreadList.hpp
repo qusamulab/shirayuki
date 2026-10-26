@@ -1,7 +1,9 @@
 #ifndef SHIRAYUKI_THREAD_LIST_HPP
 #define SHIRAYUKI_THREAD_LIST_HPP
 
-#include "ShirayukiMemory.hpp"
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace Shirayuki {
 

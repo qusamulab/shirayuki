@@ -22,25 +22,27 @@
 Shirayuki injects a **floating overlay panel** into any app on a jailbroken iPhone.
 Tap the snowflake button and start hacking — no respring per session.
 
-```
-┌─────────────────────────────────────────────┐
-│  Target App                                 │
-│                                             │
-│           ┌──────────────────────┐          │
-│           │  ❄️  Shirayuki Panel  │          │
-│           │  ┌──┬──┬──┬──┬──┬──┐│          │
-│           │  │🔍│🔧│🔒│👁│🌿│💾││          │
-│           │  └──┴──┴──┴──┴──┴──┘│          │
-│           │  [Search tab shown]  │          │
-│           │  > int32  [ Scan ]   │          │
-│           │  0x1A2B3C4D  = 100   │          │
-│           │  0x1A2B3C50  = 100   │          │
-│           └──────────────────────┘          │
-│                              ❄️ ←drag       │
-└─────────────────────────────────────────────┘
-```
-
 **Tabs:** Search · Patch · Freeze · Watch · Pointer · Dump · Threads · Modules
+
+## UI samples
+
+Simulator captures of the UIKit panel. Addresses, values and history are examples.
+
+<table>
+  <tr>
+    <th>Search</th>
+    <th>Results and narrowing</th>
+    <th>Recent searches</th>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/search.png" width="240" alt="Search panel with type selection, input field and empty-state guidance" /></td>
+    <td><img src="assets/screenshots/results.png" width="240" alt="Numeric search results with a result count and narrowing controls" /></td>
+    <td><img src="assets/screenshots/history.png" width="240" alt="Recent search values in a scrollable history dropdown" /></td>
+  </tr>
+</table>
+
+Choose a search type from the type menu. Each tab keeps its input, active scans
+show a spinner, and the status line reports result counts and scan limits.
 
 ## Install
 
@@ -64,7 +66,7 @@ Requires [Theos](https://theos.dev).
 Theos is **not** needed for these — any machine with Xcode will do:
 
 ```bash
-make test           # run the C++ core suite natively (5 suites, 527 checks)
+make test           # run the C++ core suite natively (6 suites, 592 checks)
 make syntax-check   # compile and link every source against the iPhoneOS SDK
 make check          # fmt-check + test + syntax-check
 ```

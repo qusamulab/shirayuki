@@ -1,9 +1,12 @@
 #ifndef SHIRAYUKI_POINTER_SCAN_HPP
 #define SHIRAYUKI_POINTER_SCAN_HPP
 
-#include "ShirayukiMemory.hpp"
+#include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <functional>
+#include <string>
+#include <vector>
 
 namespace Shirayuki {
 

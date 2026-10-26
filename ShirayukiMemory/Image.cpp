@@ -1,5 +1,7 @@
-#include "ShirayukiMemory.hpp"
+#include "Image.hpp"
 #include <dlfcn.h>
+
+#include <mach-o/dyld.h>
 
 namespace Shirayuki {
 

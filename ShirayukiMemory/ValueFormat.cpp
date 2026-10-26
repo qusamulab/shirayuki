@@ -1,4 +1,4 @@
-#include "ShirayukiMemory.hpp"
+#include "ValueFormat.hpp"
 #include <cerrno>
 #include <charconv>
 #include <cstdlib>
@@ -332,7 +332,7 @@ std::vector<std::string> allTags() {
 } // namespace ValueFormat
 
 // Compare two typed values pointed to by a and b. Returns -1/0/1 like memcmp.
-// Public entry point declared in ShirayukiMemory.hpp.
+// Public entry point declared in ValueFormat.hpp.
 int compareTypedBytes(const uint8_t *a, const uint8_t *b, ValueType type) {
     if (!a || !b)
         return 0;
